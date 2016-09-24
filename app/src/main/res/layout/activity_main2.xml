@@ -7,14 +7,6 @@
     android:weightSum="100"
     tools:context=".MainActivity">
 
-    <Button
-        android:layout_width="170dp"
-        android:layout_height="0dp"
-        android:layout_weight="15"
-        android:text="時間設定"
-        android:textSize="30dp"
-        android:id="@+id/seltime" />
-
     <TextView
         android:layout_width="match_parent"
         android:layout_height="0dp"
