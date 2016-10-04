@@ -32,7 +32,7 @@
         android:layout_height="0dp"
         android:layout_weight="15"
         android:layout_gravity="right"
-        android:text="戻る"
+        android:text="終了"
         android:textSize="30dp"
         android:textColor="#000000"
         android:id="@+id/resbackbutton"/>

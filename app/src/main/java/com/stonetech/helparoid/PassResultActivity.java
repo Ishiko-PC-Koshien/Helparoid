@@ -3,6 +3,7 @@ package com.stonetech.helparoid;
 import android.content.Intent;
 import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
+import android.view.KeyEvent;
 import android.view.View;
 import android.widget.Button;
 import android.widget.TextView;
@@ -33,10 +34,21 @@ public class PassResultActivity extends AppCompatActivity {
         PastBackButton.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View view) {
-                Intent intent = new Intent(getApplication(),MainActivity.class);
+                Intent intent = new Intent(getApplication(),EndActivity.class);
                 startActivity(intent);
             }
         });
 
     }
+
+    @Override
+    public boolean onKeyDown(int keyCode, KeyEvent event) {
+        // Disable Back key
+        if (keyCode == KeyEvent.KEYCODE_BACK) {
+            return false;
+        }
+
+        return super.onKeyDown(keyCode, event);
+    }
+
 }

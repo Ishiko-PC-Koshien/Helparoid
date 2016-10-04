@@ -1,12 +1,16 @@
 package com.stonetech.helparoid;
 
 import android.content.Intent;
+import android.content.SharedPreferences;
 import android.renderscript.RSDriverException;
 import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
+import android.view.KeyEvent;
 import android.view.View;
 import android.widget.Button;
 import android.widget.TextView;
+
+import java.util.Calendar;
 
 public class ResResultActivity extends AppCompatActivity {
 
@@ -22,6 +26,7 @@ public class ResResultActivity extends AppCompatActivity {
         setContentView(R.layout.activity_res_result);
 
         Intent intent = getIntent();
+
         reshour = intent.getIntExtra("ResHour", 0);
         resminute = intent.getIntExtra("ResMinute", 0);
         ressecond = intent.getIntExtra("ResSecond", 0);
@@ -35,12 +40,21 @@ public class ResResultActivity extends AppCompatActivity {
         ResBackButton.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View view) {
-                Intent intent = new Intent(getApplication(), MainActivity.class);
+                Intent intent = new Intent(getApplication(), EndActivity.class);
                 startActivity(intent);
             }
         });
 
-
-
     }
+
+    @Override
+    public boolean onKeyDown(int keyCode, KeyEvent event) {
+        // Disable Back key
+        if (keyCode == KeyEvent.KEYCODE_BACK) {
+            return false;
+        }
+
+        return super.onKeyDown(keyCode, event);
+    }
+
 }

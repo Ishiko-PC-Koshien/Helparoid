@@ -1,29 +1,36 @@
 package com.stonetech.helparoid;
 
 import android.Manifest;
+import android.annotation.TargetApi;
+import android.app.Notification;
+import android.app.NotificationManager;
+import android.app.PendingIntent;
 import android.content.Context;
 import android.content.DialogInterface;
 import android.content.Intent;
+import android.content.SharedPreferences;
 import android.content.pm.PackageManager;
+import android.graphics.Color;
 import android.location.Criteria;
 import android.location.Location;
 import android.location.LocationListener;
 import android.location.LocationManager;
-import android.net.Uri;
+import android.os.Build;
 import android.os.Handler;
 import android.os.Vibrator;
 import android.provider.Settings;
 import android.support.v4.app.ActivityCompat;
+import android.support.v4.app.NotificationCompat;
+import android.support.v4.app.NotificationManagerCompat;
 import android.support.v7.app.AlertDialog;
 import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
+import android.view.KeyEvent;
 import android.view.View;
 import android.widget.Button;
 import android.widget.TextView;
 
-import com.google.android.gms.appindexing.Action;
 import com.google.android.gms.appindexing.AppIndex;
-import com.google.android.gms.appindexing.Thing;
 import com.google.android.gms.common.api.GoogleApiClient;
 
 import java.util.Calendar;
@@ -31,6 +38,25 @@ import java.util.Timer;
 import java.util.TimerTask;
 
 public class Main2Activity extends AppCompatActivity implements LocationListener {
+
+    private static String KEY_CURRENT_STATE = "CurrentState";
+    private static int REST_OVER_1HOUR_LARGER = 8;
+    private static int REST_OVER_1HOUR = 7;
+    private static int REST_OVER_30MINUTE = 6;
+    private static int REST_OVER_10MINUTE = 5;
+    private static int REST_OVER_5MINUTE = 4;
+    private static int REST_OVER_2MINUTE = 3;
+    private static int REST_OVER_1MINUTE = 2;
+    private static int REST_OVER_PASS = 1;
+    private static int GO_HOUSE_NOTI = -5;
+
+    int endnoti = 0;
+
+    private static int LIMIT_1HOUR_LARGER = 61, LIMIT_1HOUR = 60,
+            LIMIT_30MINUTE = 30, LIMIT_10MINUTE = 10, LIMIT_5MINUTE = 5, LIMIT_2MINUTE = 2,
+            LIMIT_1MINUTE = 1, LIMIT_PASS = -10, GO_HOUSE = -50, END_NOTI = -100;
+
+    private int currentState;
 
     //残り時間, カウントダウン, 過ぎた時間のテキスト
     TextView TimeText, CountText, PassText;
@@ -47,26 +73,20 @@ public class Main2Activity extends AppCompatActivity implements LocationListener
     int passsecond = -1;
     int passminute = 0;
 
-    //バイブレーションのやつ
-    int vib5 = 1;
-    int vib2 = 1;
-    int vib1 = 1;
-    int vib0 = 1;
-
-    int hourOfDay, minute, second;
+    int notitu = 100;
 
     //今の時間と、佐野時間
-    int nowhour, nowminute, nowsecond, reshour, resminute, ressecond;
+    int nowhour, nowminute, nowsecond,
+            reshour = -5, resminute = -5, ressecond = -5;
 
-    ////ロケーションマネージャー
-    //LocationManager mLocationManager;
-    /**
-     * ATTENTION: This was auto-generated to implement the App Indexing API.
-     * See https://g.co/AppIndexing/AndroidStudio for more information.
-     */
     private GoogleApiClient client;
 
     LocationManager mLocationManager;
+
+    Context context = this;
+
+    SharedPreferences preferences;
+
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -74,20 +94,23 @@ public class Main2Activity extends AppCompatActivity implements LocationListener
         setContentView(R.layout.activity_main2);
 
         Intent intent = getIntent();
-        hourOfDay = intent.getIntExtra("HourOfDay", 0);
-        minute = intent.getIntExtra("Minute", 0);
-        second = intent.getIntExtra("Second", 0);
+        preferences = getSharedPreferences("preferenceSample", MODE_PRIVATE);
+
+        final SharedPreferences.Editor editor = preferences.edit();
+        //editor.putInt("CurrentState", currentState );
+
+        //currentState = preferences.getInt(KEY_CURRENT_STATE, 0);
+
+        final int hourOfDay = preferences.getInt("HourOfDay", 0);
+        final int minute = preferences.getInt("Minute", 0);
+        final int second = preferences.getInt("Second", 0);
+
 
         //テキストやボタンたち
         TimeText = (TextView) findViewById(R.id.timetext);
         CountText = (TextView) findViewById(R.id.counttext);
         PassText = (TextView) findViewById(R.id.passtext);
         GoButton = (Button) findViewById(R.id.gobutton);
-        //バイブレーターのパターンとか
-        final Vibrator v = (Vibrator) getSystemService(VIBRATOR_SERVICE);
-        final long[] pattern1 = {0, 500};
-        final long[] pattern2 = {0, 500, 100, 500};
-        final long[] pattern3 = {0, 500, 100, 500, 100, 500};
 
         //GPS関係
         mLocationManager = (LocationManager) getSystemService(Context.LOCATION_SERVICE);
@@ -118,10 +141,6 @@ public class Main2Activity extends AppCompatActivity implements LocationListener
         if (null != CountTimer) {
             CountTimer.cancel();
             CountTimer = null;
-            vib5 = 1;
-            vib2 = 1;
-            vib1 = 1;
-            vib0 = 1;
         }
 
         if (null != PassTimer) {
@@ -167,93 +186,99 @@ public class Main2Activity extends AppCompatActivity implements LocationListener
                         CountText.setText("残り" + String.format("%1$02d:%2$02d:%3$02d",
                                 reshour, resminute, ressecond));
 
+                        currentState = preferences.getInt(KEY_CURRENT_STATE, 0);
+
                         //各残り時間ごとの言葉
-                        if ((reshour >= 1) || (resminute >= 30)) {
+                        // 1時間以上の時
+                        if (reshour > 0) {
                             PassText.setText("まだまだ余裕ですね");
-                        } else if ((reshour == 0) && (resminute < 30) && (resminute > 5)) {
+                            if (currentState != REST_OVER_1HOUR_LARGER) {
+                                currentState = REST_OVER_1HOUR_LARGER;
+                                editor.putInt(KEY_CURRENT_STATE, currentState);
+                                notitu = LIMIT_1HOUR_LARGER;
+                                buildNotification();
+                                editor.apply();
+                            }
+                        }
+                        if (reshour == 0 && resminute >= 30 && resminute  <= 59) {
+                            PassText.setText("まだまだ余裕ですね");
+                            if (currentState != REST_OVER_1HOUR) {
+                                currentState = REST_OVER_1HOUR;
+                                editor.putInt(KEY_CURRENT_STATE, currentState);
+                                notitu = LIMIT_1HOUR;
+                                buildNotification();
+                                editor.apply();
+
+                            }
+                        }
+                        if (reshour == 0 && resminute >= 10 && resminute <= 29) {
                             PassText.setText("時間が近づいてきました");
-                            //ここからバイもなる
-                        } else if ((reshour == 0) && (resminute <= 4) && (resminute > 2)) {
-                            PassText.setText("時間がありません。\n急いでください!");
-                            if (vib5 == 1) {
-                                v.vibrate(pattern1, -1);
-                                vib5 = 0;
+                            if (currentState != REST_OVER_30MINUTE) {
+                                currentState = REST_OVER_30MINUTE;
+                                editor.putInt(KEY_CURRENT_STATE, currentState);
+                                notitu = LIMIT_30MINUTE;
+                                buildNotification();
+                                editor.apply();
                             }
-
-                        } else if ((reshour == 0) && (resminute <= 2) && (resminute > 0)) {
-                            PassText.setText("まだですか?急げ!!");
-                            if (vib2 == 1) {
-                                v.vibrate(pattern2, -1);
-                                vib2 = 0;
+                        }
+                        if (reshour == 0 && resminute >= 5 && resminute <= 9) {
+                            PassText.setText("時間が近づいてきました。");
+                            if (currentState != REST_OVER_10MINUTE) {
+                                currentState = REST_OVER_10MINUTE;
+                                editor.putInt(KEY_CURRENT_STATE, currentState);
+                                notitu = LIMIT_10MINUTE;
+                                buildNotification();
+                                editor.apply();
                             }
-
-                        } else if ((reshour == 0) && (resminute == 0)) {
+                        }
+                        if (reshour == 0 && resminute >= 2 && resminute <= 4) {
+                            PassText.setText("時間がありません。急いでください!");
+                            if (currentState != REST_OVER_5MINUTE) {
+                                currentState = REST_OVER_5MINUTE;
+                                editor.putInt(KEY_CURRENT_STATE, currentState);
+                                notitu = LIMIT_5MINUTE;
+                                buildNotification();
+                                editor.apply();
+                            }
+                        }
+                        if (reshour == 0 && resminute == 1) {
+                            PassText.setText("まだですか?急げ!");
+                            if (currentState != REST_OVER_2MINUTE){
+                                currentState = REST_OVER_2MINUTE;
+                                editor.putInt(KEY_CURRENT_STATE, currentState);
+                                notitu = LIMIT_2MINUTE;
+                                buildNotification();
+                                editor.apply();
+                            }
+                        }
+                        if (reshour == 0 && resminute == 0){
                             PassText.setText("急げ!急げ!急げ!!");
-                            if (vib1 == 1) {
-                                v.vibrate(pattern3, -1);
-                                vib1 = 0;
-                            }
+                            if (currentState != REST_OVER_1MINUTE){
+                                currentState = REST_OVER_1MINUTE;
+                                editor.putInt(KEY_CURRENT_STATE, currentState);
+                                notitu = LIMIT_1MINUTE;
+                                buildNotification();
+                                editor.apply();
 
+                            }
                         }
 
-                        //家から出たボタンの処理(一応)
-                        GoButton.setOnClickListener(new View.OnClickListener() {
-                            @Override
-                            public void onClick(View view) {
-                                //時間過ぎてなかったら
-                                if (CountTimer != null) {
-                                    //その時用のアクティビティに飛ぶ
-                                    Intent intent = new Intent(getApplication(), ResResultActivity.class);
-                                    //時、分、秒を渡す
-                                    intent.putExtra("ResHour", reshour);
-                                    intent.putExtra("ResMinute", resminute);
-                                    intent.putExtra("ResSecond", ressecond);
-                                    startActivity(intent);
 
-                                    //タイマーリセット
-                                    CountTimer.cancel();
-                                    CountTimer = null;
-
-                                    //バイブレーションのやつもリセット
-                                    vib5 = 1;
-                                    vib2 = 1;
-                                    vib1 = 1;
-                                    vib0 = 1;
-
-                                    //時間が過ぎていたら
-                                } else if (PassTimer != null) {
-                                    //その時用のアクティビティに飛ぶ
-                                    Intent intent = new Intent(getApplication(), PassResultActivity.class);
-                                    intent.putExtra("PassMinute", passminute);
-                                    intent.putExtra("PassSecond", passsecond);
-                                    startActivity(intent);
-
-                                    PassTimer.cancel();
-                                    PassTimer = null;
-
-                                    vib5 = 1;
-                                    vib2 = 1;
-                                    vib1 = 1;
-                                    vib0 = 1;
-
-                                }
-
-                            }
-                        });
 
                         //全部ゼロになったら
                         if ((reshour == 0) && (resminute == 0) && (ressecond == 0)) {
 
-                            //バイブレーションを1秒鳴らす
-                            v.vibrate(1000);
+                            if (currentState != REST_OVER_PASS) {
+                                currentState = REST_OVER_PASS;
+                                editor.putInt(KEY_CURRENT_STATE, currentState);
+                                notitu = LIMIT_PASS;
+                                buildNotification();
+                                editor.apply();
+                            }
 
-                            //いろいろいリセット
+                            //いろいろリセット
                             CountTimer.cancel();
                             CountTimer = null;
-                            vib5 = 1;
-                            vib2 = 1;
-                            vib1 = 1;
-                            vib0 = 1;
 
                             //一応過ぎたタイマーもリセットしとく
                             if (null != PassTimer) {
@@ -284,9 +309,62 @@ public class Main2Activity extends AppCompatActivity implements LocationListener
                                     });
                                 }
                             }, 0, 1000);
-
-
                         }
+
+                        //家から出たボタンの処理(一応)
+                        GoButton.setOnClickListener(new View.OnClickListener() {
+                            @Override
+                            public void onClick(View view) {
+                                //時間過ぎてなかったら
+                                if (CountTimer != null) {
+                                    //その時用のアクティビティに飛ぶ
+                                    Intent intent = new Intent(getApplication(), ResResultActivity.class);
+                                    //時、分、秒を渡す
+                                    intent.putExtra("ResHour", reshour);
+                                    intent.putExtra("ResMinute", resminute);
+                                    intent.putExtra("ResSecond", ressecond);
+                                    startActivity(intent);
+
+                                    reshour = -5;
+                                    resminute = -5;
+                                    ressecond = -5;
+                                    CountTimer.cancel();
+                                    CountTimer = null;
+
+                                    if (endnoti == 0){
+                                        notitu = END_NOTI;
+                                        buildNotification();
+                                        endnoti = 1;
+
+                                    }
+
+                                    //時間が過ぎていたら
+                                } else if (PassTimer != null) {
+                                    //その時用のアクティビティに飛ぶ
+                                    Intent intent = new Intent(getApplication(), PassResultActivity.class);
+                                    intent.putExtra("PassMinute", passminute);
+                                    intent.putExtra("PassSecond", passsecond);
+                                    startActivity(intent);
+
+                                    reshour = -5;
+                                    resminute = -5;
+                                    ressecond = -5;
+                                    PassTimer.cancel();
+                                    PassTimer = null;
+
+                                    if (endnoti == 0){
+                                        notitu = END_NOTI;
+                                        buildNotification();
+                                        endnoti = 1;
+
+                                    }
+
+                                }
+
+                            }
+                        });
+
+
                     }
                 });
             }
@@ -296,6 +374,216 @@ public class Main2Activity extends AppCompatActivity implements LocationListener
         // See https://g.co/AppIndexing/AndroidStudio for more information.
         client = new GoogleApiClient.Builder(this).addApi(AppIndex.API).build();
 
+
+    }
+
+    private boolean showingNotification = false;
+
+    private void buildNotification() {
+
+        Intent intent = new Intent(getApplicationContext(), Main2Activity.class);
+        Intent intentresres = new Intent(getApplicationContext(), ResResultActivity.class);
+        Intent intentpasres = new Intent(getApplicationContext(), PassResultActivity.class);
+        Intent intentend = new Intent(getApplicationContext(), EndActivity.class);
+
+        PendingIntent pendingIntent = PendingIntent.getActivity(context, 0, intent, 0);
+        PendingIntent pendingIntentend = PendingIntent.getActivity(context, 0, intentend, 0);
+        PendingIntent pendingIntentresres = PendingIntent.getActivity(context, 0, intentresres, 0);
+        PendingIntent pendingIntentpasres = PendingIntent.getActivity(context, 0, intentpasres, 0);
+
+
+
+        if (notitu == LIMIT_1HOUR_LARGER) {
+            Notification notification = new Notification.Builder(getApplicationContext())
+                    .setContentTitle("残り1時間以上あります。")    //  タイトルです（太字）。
+                    .setContentText("まだまだ余裕ですね")    //  メッセージテキストです。
+                    .setContentIntent(pendingIntent)    //  タップされた時に発行するインテントを指定します。
+                    .setAutoCancel(false)    //  タップされた時に、通知バーから消去する場合はtrueにします。
+                    .setSmallIcon(R.mipmap.ic_launcher)    //  左側のアイコン画像です。
+                    .setLights(Color.GREEN, 1000, 2000)
+                    .setDefaults(Notification.DEFAULT_SOUND | Notification.DEFAULT_VIBRATE)
+                    .setWhen(System.currentTimeMillis())
+                    .build();
+
+            notification.flags = Notification.FLAG_NO_CLEAR;
+            NotificationManagerCompat nm = NotificationManagerCompat.from(getApplicationContext());
+            nm.notify(0, notification);
+
+        }
+        if (notitu == LIMIT_1HOUR) {
+            Notification notification = new Notification.Builder(getApplicationContext())
+                    .setContentTitle("残り1時間あります。")    //  タイトルです（太字）。
+                    .setContentText("まだまだ余裕ですね")    //  メッセージテキストです。
+                    .setContentIntent(pendingIntent)    //  タップされた時に発行するインテントを指定します。
+                    .setAutoCancel(false)    //  タップされた時に、通知バーから消去する場合はtrueにします。
+                    .setSmallIcon(R.mipmap.ic_launcher)    //  左側のアイコン画像です。
+                    .setLights(Color.GREEN, 1000, 2000)
+                    .setDefaults(Notification.DEFAULT_SOUND | Notification.DEFAULT_VIBRATE)
+                    .setWhen(System.currentTimeMillis())
+                    .build();
+
+            notification.flags = Notification.FLAG_NO_CLEAR;
+            NotificationManagerCompat nm = NotificationManagerCompat.from(getApplicationContext());
+            nm.notify(0, notification);
+        }
+        if (notitu == LIMIT_30MINUTE) {
+            Notification notification = new Notification.Builder(getApplicationContext())
+                    .setContentTitle("残り30分です。")    //  タイトルです（太字）。
+                    .setContentText("まだ余裕ですね")    //  メッセージテキストです。
+                    .setContentIntent(pendingIntent)    //  タップされた時に発行するインテントを指定します。
+                    .setAutoCancel(false)    //  タップされた時に、通知バーから消去する場合はtrueにします。
+                    .setSmallIcon(R.mipmap.ic_launcher)    //  左側のアイコン画像です。
+                    .setLights(Color.GREEN, 1000, 2000)
+                    .setDefaults(Notification.DEFAULT_SOUND | Notification.DEFAULT_VIBRATE)
+                    .setWhen(System.currentTimeMillis())
+                    .build();
+            notification.flags = Notification.FLAG_NO_CLEAR;
+            NotificationManager nm = (NotificationManager) getSystemService(NOTIFICATION_SERVICE);
+            nm.notify(0, notification);
+
+        }
+        if (notitu == LIMIT_10MINUTE) {
+            Notification notification = new Notification.Builder(getApplicationContext())
+                    .setContentTitle("残り10分です。")    //  タイトルです（太字）。
+                    .setContentText("時間が近づいてきました。")    //  メッセージテキストです。
+                    .setContentIntent(pendingIntent)    //  タップされた時に発行するインテントを指定します。
+                    .setAutoCancel(false)    //  タップされた時に、通知バーから消去する場合はtrueにします。
+                    .setSmallIcon(R.mipmap.ic_launcher)    //  左側のアイコン画像です。
+                    .setLights(Color.GREEN, 1000, 2000)
+                    .setDefaults(Notification.DEFAULT_SOUND | Notification.DEFAULT_VIBRATE)
+                    .setWhen(System.currentTimeMillis())
+                    .build();
+            notification.flags = Notification.FLAG_NO_CLEAR;
+            NotificationManager nm = (NotificationManager) getSystemService(NOTIFICATION_SERVICE);
+            nm.notify(0, notification);
+
+        }
+        if (notitu == LIMIT_5MINUTE) {
+            Notification notification = new Notification.Builder(getApplicationContext())
+                    .setContentTitle("残り5分です。")    //  タイトルです（太字）。
+                    .setContentText("時間がありません。急いでください!")    //  メッセージテキストです。
+                    .setContentIntent(pendingIntent)    //  タップされた時に発行するインテントを指定します。
+                    .setAutoCancel(false)    //  タップされた時に、通知バーから消去する場合はtrueにします。
+                    .setSmallIcon(R.mipmap.ic_launcher)    //  左側のアイコン画像です。
+                    .setLights(Color.GREEN, 1000, 2000)
+                    .setDefaults(Notification.DEFAULT_SOUND | Notification.DEFAULT_VIBRATE)
+                    .setWhen(System.currentTimeMillis())
+                    .build();
+            notification.flags = Notification.FLAG_NO_CLEAR;
+            NotificationManager nm = (NotificationManager) getSystemService(NOTIFICATION_SERVICE);
+            nm.notify(0, notification);
+
+        }
+        if (notitu == LIMIT_2MINUTE) {
+            Notification notification = new Notification.Builder(getApplicationContext())
+                    .setContentTitle("残り2分です。")    //  タイトルです（太字）。
+                    .setContentText("まだですか?急げ!")    //  メッセージテキストです。
+                    .setContentIntent(pendingIntent)    //  タップされた時に発行するインテントを指定します。
+                    .setAutoCancel(false)    //  タップされた時に、通知バーから消去する場合はtrueにします。
+                    .setSmallIcon(R.mipmap.ic_launcher)    //  左側のアイコン画像です。
+                    .setLights(Color.GREEN, 1000, 2000)
+                    .setDefaults(Notification.DEFAULT_SOUND | Notification.DEFAULT_VIBRATE)
+                    .setWhen(System.currentTimeMillis())
+                    .build();
+            notification.flags = Notification.FLAG_NO_CLEAR;
+            NotificationManagerCompat nm = NotificationManagerCompat.from(getApplicationContext());
+            nm.notify(0, notification);
+
+        }
+        if (notitu == LIMIT_1MINUTE) {
+            Notification notification = new Notification.Builder(getApplicationContext())
+                    .setContentTitle("残り1分です。")    //  タイトルです（太字）。
+                    .setContentText("急げ!急げ!急げ!!")    //  メッセージテキストです。
+                    .setContentIntent(pendingIntent)    //  タップされた時に発行するインテントを指定します。
+                    .setAutoCancel(false)    //  タップされた時に、通知バーから消去する場合はtrueにします。
+                    .setSmallIcon(R.mipmap.ic_launcher)    //  左側のアイコン画像です。
+                    .setLights(Color.GREEN, 1000, 2000)
+                    .setDefaults(Notification.DEFAULT_SOUND | Notification.DEFAULT_VIBRATE)
+                    .setWhen(System.currentTimeMillis())
+                    .build();
+            notification.flags = Notification.FLAG_NO_CLEAR;
+            NotificationManagerCompat nm = NotificationManagerCompat.from(getApplicationContext());
+            nm.notify(0, notification);
+
+        }
+
+        if (notitu == LIMIT_PASS) {
+            Notification notification = new Notification.Builder(getApplicationContext())
+                    .setContentTitle("時間過ぎてます!")    //  タイトルです（太字）。
+                    .setContentText("急いでください!")    //  メッセージテキストです。
+                    .setContentIntent(pendingIntent)    //  タップされた時に発行するインテントを指定します。
+                    .setAutoCancel(false)    //  タップされた時に、通知バーから消去する場合はtrueにします。
+                    .setSmallIcon(R.mipmap.ic_launcher)    //  左側のアイコン画像です。
+                    .setLights(Color.GREEN, 1000, 2000)
+                    .setDefaults(Notification.DEFAULT_SOUND | Notification.DEFAULT_VIBRATE)
+                    .setWhen(System.currentTimeMillis())
+                    .build();
+            notification.flags = Notification.FLAG_NO_CLEAR;
+            NotificationManager nm = (NotificationManager) getSystemService(NOTIFICATION_SERVICE);
+            nm.notify(0, notification);
+
+        }
+        if (notitu == GO_HOUSE) {
+            if (PassTimer == null) {
+                Notification notification = new Notification.Builder(getApplicationContext())
+                        .setContentTitle("家から出ました!")    //  タイトルです（太字）。
+                        .setContentText("タップで結果へ")//  メッセージテキストです。
+                        .setContentIntent(pendingIntentresres)    //  タップされた時に発行するインテントを指定します。
+                        .setAutoCancel(true)    //  タップされた時に、通知バーから消去する場合はtrueにします。
+                        .setSmallIcon(R.mipmap.ic_launcher)//  左側のアイコン画像です。
+                        .setLights(Color.GREEN, 1000, 2000)
+                        .setDefaults(Notification.DEFAULT_SOUND | Notification.DEFAULT_VIBRATE)
+                        .setWhen(System.currentTimeMillis())
+                        .build();
+                notification.flags = Notification.FLAG_NO_CLEAR;
+                NotificationManager nm = (NotificationManager) getSystemService(NOTIFICATION_SERVICE);
+                nm.notify(0, notification);
+
+
+            }
+            if (PassTimer != null) {
+                Notification notification = new Notification.Builder(getApplicationContext())
+                        .setContentTitle("家から出ました!")    //  タイトルです（太字）。
+                        .setContentText("タップで結果へ")//  メッセージテキストです。
+                        .setContentIntent(pendingIntentpasres)    //  タップされた時に発行するインテントを指定します。
+                        .setAutoCancel(true)    //  タップされた時に、通知バーから消去する場合はtrueにします。
+                        .setSmallIcon(R.mipmap.ic_launcher)//  左側のアイコン画像です。
+                        .setLights(Color.GREEN, 1000, 2000)
+                        .setDefaults(Notification.DEFAULT_SOUND | Notification.DEFAULT_VIBRATE)
+                        .setWhen(System.currentTimeMillis())
+                        .build();
+                notification.flags = Notification.FLAG_NO_CLEAR;
+                NotificationManager nm = (NotificationManager) getSystemService(NOTIFICATION_SERVICE);
+                nm.notify(0, notification);
+
+            }
+        }
+
+        if (notitu == END_NOTI){
+            Notification notification = new Notification.Builder(getApplicationContext())
+                    .setContentTitle("今日は終了です")    //  タイトルです（太字）。
+                    .setContentText("今日も一日頑張りましょう!")//  メッセージテキストです。
+                    .setContentIntent(pendingIntentend)    //  タップされた時に発行するインテントを指定します。
+                    .setAutoCancel(true)    //  タップされた時に、通知バーから消去する場合はtrueにします。
+                    .setSmallIcon(R.mipmap.ic_launcher)//  左側のアイコン画像です。
+                    //.setLights(Color.GREEN, 1000, 2000)
+                    //.setDefaults(Notification.DEFAULT_SOUND | Notification.DEFAULT_VIBRATE)
+                    .setWhen(System.currentTimeMillis())
+                    .build();
+            //notification.flags = Notification.FLAG_NO_CLEAR;
+            NotificationManager nm = (NotificationManager) getSystemService(NOTIFICATION_SERVICE);
+            nm.notify(0, notification);
+        }
+
+//        //LEDライト LEDは画面がOFFの時に出力してる
+//        builder.setDefaults(Notification.DEFAULT_LIGHTS); //この行を削除すると点滅しつづける。
+//        builder.setLights(Color.GREEN, 1000, 2000); //発光色,発光時間,消灯時間
+//
+//        //通知の音とバイブ
+//        builder.setDefaults(Notification.DEFAULT_SOUND | Notification.DEFAULT_VIBRATE);
+//        builder.setAutoCancel(false);//クリックで通知バーから削除
+//        NotificationManagerCompat manager = NotificationManagerCompat.from(getApplicationContext());
+//        manager.notify(0, builder.build());
 
     }
 
@@ -367,7 +655,7 @@ public class Main2Activity extends AppCompatActivity implements LocationListener
     //最初の座標と細心の座標の差の変数
     double minlati, minlongi;
     //差の指定(±この数値超えたら画面変わる)
-    double optmin = 0.00003;
+    double optmin = 0.00007;
     //ダイアログは一回しか出さない
     int once = 0;
 
@@ -390,23 +678,61 @@ public class Main2Activity extends AppCompatActivity implements LocationListener
 
 
         //ダイアログがまだなくて指定の数値以上座標がずれたら
-        if ((once == 0) && ((minlati >= optmin ) || (minlati <= -optmin)  ||
-                (minlongi >= optmin) || (minlongi <= -optmin))){
+        if ((once == 0) && ((minlati >= optmin) || (minlati <= -optmin) ||
+                (minlongi >= optmin) || (minlongi <= -optmin))) {
 
             //ダイアログを出さないようにプラスする
-            once ++;
+            once++;
+            buildNotification();
+            notitu = GO_HOUSE;
 
             //ここでタイマーとめないとうまくいかない
-            if (CountTimer != null){
+            if (CountTimer != null) {
                 CountTimer.cancel();
-            }else if (PassTimer != null) {
+            } else if (PassTimer != null) {
                 PassTimer.cancel();
             }
 
 
+//            Intent intent = new Intent(getApplicationContext(), Main2Activity.class);
+//            PendingIntent pendingIntent = PendingIntent.getActivity(context, 0, intent, 0);
+//
+//
+//            //簡単なやりかた
+//            NotificationCompat.Builder builder = new NotificationCompat.Builder(getApplicationContext());
+//
+//            builder.setSmallIcon(R.mipmap.ic_launcher);
+//            builder.setContentTitle("家から出発しました!");
+//            builder.setContentText("");
+//            //                                builder.setSubText("Sub text");
+//            //                                builder.setContentInfo("Info");
+//            builder.setWhen(System.currentTimeMillis());
+//
+//            //クリックされたらIntentへ飛ばす
+//            builder.setContentIntent(pendingIntent);
+//
+//            //バイブレーションがなる
+//            final Vibrator v2 = (Vibrator) getSystemService(VIBRATOR_SERVICE);
+//            final long[] patternG = {0, 300, 100, 300};
+//            v2.vibrate(patternG, -1);
+//
+//            //LEDライト LEDは画面がOFFの時に出力してる
+//            builder.setDefaults(Notification.DEFAULT_LIGHTS); //この行を削除すると点滅しつづける。
+//            builder.setLights(Color.GREEN, 1000, 2000); //発光色,発光時間,消灯時間
+//
+//            //通知の音とバイブ
+//            builder.setDefaults(Notification.DEFAULT_SOUND | Notification.DEFAULT_VIBRATE);
+//
+//            builder.setAutoCancel(true);//クリックで通知バーから削除
+//
+//            NotificationManagerCompat manager = NotificationManagerCompat.from(getApplicationContext());
+//            manager.notify(0, builder.build());
+
+
+
             //家から出たときのダイアログメッセージ
-            AlertDialog.Builder builder = new AlertDialog.Builder(this);
-            builder.setMessage("家から出た!!")
+            AlertDialog.Builder builder2 = new AlertDialog.Builder(this);
+            builder2.setMessage("家から出た!!")
                     .setPositiveButton("結果へ", new DialogInterface.OnClickListener() {
                         public void onClick(DialogInterface dialog, int id) {
                             //時間過ぎてなかったら
@@ -419,14 +745,19 @@ public class Main2Activity extends AppCompatActivity implements LocationListener
                                 intent.putExtra("ResSecond", ressecond);
                                 startActivity(intent);
 
-                                //一応リセット
+                                //リセット
+                                reshour = -5;
+                                resminute = -5;
+                                ressecond = -5;
                                 CountTimer.cancel();
                                 CountTimer = null;
 
-                                vib5 = 1;
-                                vib2 = 1;
-                                vib1 = 1;
-                                vib0 = 1;
+                                if (endnoti == 0){
+                                    notitu = END_NOTI;
+                                    buildNotification();
+                                    endnoti = 1;
+
+                                }
 
                                 //時間過ぎてたら
                             } else if (PassTimer != null) {
@@ -436,13 +767,20 @@ public class Main2Activity extends AppCompatActivity implements LocationListener
                                 intent.putExtra("PassSecond", passsecond);
                                 startActivity(intent);
 
+                                reshour = -5;
+                                resminute = -5;
+                                ressecond = -5;
+                                CountTimer.cancel();
+                                CountTimer = null;
                                 PassTimer.cancel();
                                 PassTimer = null;
 
-                                vib5 = 1;
-                                vib2 = 1;
-                                vib1 = 1;
-                                vib0 = 1;
+                                if (endnoti == 0){
+                                    notitu = END_NOTI;
+                                    buildNotification();
+                                    endnoti = 1;
+
+                                }
 
                             }
 
@@ -450,15 +788,12 @@ public class Main2Activity extends AppCompatActivity implements LocationListener
                         }
                     });
 
-            builder.show();
+            builder2.show();
 
 
         }
 
     }
-
-
-
 
 
     @Override
@@ -476,39 +811,15 @@ public class Main2Activity extends AppCompatActivity implements LocationListener
 
     }
 
-    /**
-     * ATTENTION: This was auto-generated to implement the App Indexing API.
-     * See https://g.co/AppIndexing/AndroidStudio for more information.
-     */
-    public Action getIndexApiAction() {
-        Thing object = new Thing.Builder()
-                .setName("Main Page") // TODO: Define a title for the content shown.
-                // TODO: Make sure this auto-generated URL is correct.
-                .setUrl(Uri.parse("http://[ENTER-YOUR-URL-HERE]"))
-                .build();
-        return new Action.Builder(Action.TYPE_VIEW)
-                .setObject(object)
-                .setActionStatus(Action.STATUS_TYPE_COMPLETED)
-                .build();
-    }
 
     @Override
-    public void onStart() {
-        super.onStart();
+    public boolean onKeyDown(int keyCode, KeyEvent event) {
+        // Disable Back key
+        if (keyCode == KeyEvent.KEYCODE_BACK) {
+            return false;
+        }
 
-        // ATTENTION: This was auto-generated to implement the App Indexing API.
-        // See https://g.co/AppIndexing/AndroidStudio for more information.
-        client.connect();
-        AppIndex.AppIndexApi.start(client, getIndexApiAction());
+        return super.onKeyDown(keyCode, event);
     }
 
-    @Override
-    public void onStop() {
-        super.onStop();
-
-        // ATTENTION: This was auto-generated to implement the App Indexing API.
-        // See https://g.co/AppIndexing/AndroidStudio for more information.
-        AppIndex.AppIndexApi.end(client, getIndexApiAction());
-        client.disconnect();
-    }
 }

@@ -5,6 +5,7 @@ import android.app.TimePickerDialog;
 import android.content.Context;
 import android.content.DialogInterface;
 import android.content.Intent;
+import android.content.SharedPreferences;
 import android.content.pm.PackageManager;
 import android.location.Criteria;
 import android.location.Location;
@@ -13,11 +14,14 @@ import android.location.LocationManager;
 import android.net.Uri;
 import android.os.Handler;
 import android.os.Vibrator;
+import android.preference.PreferenceManager;
 import android.provider.Settings;
 import android.support.v4.app.ActivityCompat;
+import android.support.v4.content.SharedPreferencesCompat;
 import android.support.v7.app.AlertDialog;
 import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
+import android.view.KeyEvent;
 import android.view.View;
 import android.widget.Button;
 import android.widget.TextView;
@@ -34,6 +38,9 @@ import java.util.TimerTask;
 
 public class MainActivity extends AppCompatActivity {
 
+    private static String KEY_CURRENT_STATE = "CurrentState";
+    private static int currentState;
+
     // 時刻設定ダイアログのインスタンスを格納する変数
     private TimePickerDialog.OnTimeSetListener varTimeSetListener;
 
@@ -43,6 +50,9 @@ public class MainActivity extends AppCompatActivity {
     protected void onCreate(final Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
+
+        final SharedPreferences preferences = getSharedPreferences("preferenceSample", MODE_PRIVATE);
+
 
         SelTimeButton = (Button) findViewById(R.id.seltime);
 
@@ -55,21 +65,23 @@ public class MainActivity extends AppCompatActivity {
                     TimePicker view, final int hourOfDay, final int minute) {
                 final int second = 0;
 
+                SharedPreferences.Editor editor = preferences.edit();
+                editor.putInt("HourOfDay", hourOfDay);
+                editor.putInt("Minute", minute);
+                editor.putInt("Second", second);
+                currentState = -10;
+                editor.putInt(KEY_CURRENT_STATE, currentState);
+                editor.commit();
+
+
+
                 Intent intent = new Intent(getApplication(), Main2Activity.class);
-                intent.putExtra("HourOfDay", hourOfDay);
-                intent.putExtra("Minute", minute);
-                intent.putExtra("Second", second);
+
                 startActivity(intent);
-
-
-
-
 
             }
 
         };
-
-
 
         //時刻設定ボタンを押したときの処理
         SelTimeButton.setOnClickListener(new View.OnClickListener() {
@@ -89,10 +101,17 @@ public class MainActivity extends AppCompatActivity {
             }
         });
 
-
-
     }
 
+    @Override
+    public boolean onKeyDown(int keyCode, KeyEvent event) {
+        // Disable Back key
+        if (keyCode == KeyEvent.KEYCODE_BACK) {
+            return false;
+        }
+
+        return super.onKeyDown(keyCode, event);
+    }
 
 }
 
