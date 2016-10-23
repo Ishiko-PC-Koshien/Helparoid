@@ -1,8 +1,11 @@
 <?xml version="1.0" encoding="utf-8"?>
 <manifest xmlns:android="http://schemas.android.com/apk/res/android"
-    package="com.stonetech.helparoid">
+    package="com.stonetech.mezamamamama211">
 
+    <uses-permission android:name="android.permission.WAKE_LOCK" />
     <uses-permission android:name="android.permission.VIBRATE" />
+    <uses-permission android:name="android.permission.DISABLE_KEYGUARD" />
+    <uses-permission android:name="android.permission.RECEIVE_BOOT_COMPLETED" />
     <uses-permission android:name="android.permission.ACCESS_FINE_LOCATION" />
     <uses-permission android:name="android.permission.ACCESS_COARSE_LOCATION" />
 
@@ -14,7 +17,6 @@
         android:theme="@style/AppTheme">
         <activity
             android:name=".MainActivity"
-            android:launchMode="singleTop"
             android:screenOrientation="portrait">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
@@ -22,6 +24,31 @@
                 <category android:name="android.intent.category.LAUNCHER" />
             </intent-filter>
         </activity>
+        <activity
+            android:name=".AlarmActivity"
+            android:screenOrientation="portrait" />
+
+        <receiver
+            android:name=".AlarmBroadcastReceiver"
+            android:process=":remote" />
+
+        <receiver
+            android:name=".BroadcastReceiverSleep"
+            android:process=":remote" />
+
+        <activity
+            android:name=".SubActivity"
+            android:screenOrientation="portrait" />
+
+        <receiver android:name=".BroadIntent_wakeUp">
+            <intent-filter>
+                <action android:name="android.intent.action.BOOT_COMPLETED" />
+            </intent-filter>
+        </receiver>
+
+        <activity
+            android:name=".BackAlarm"
+            android:screenOrientation="portrait" />
         <activity
             android:name=".ResResultActivity"
             android:launchMode="singleTop"
@@ -34,7 +61,10 @@
             android:name=".Main2Activity"
             android:launchMode="singleTop"
             android:screenOrientation="portrait"></activity>
-        <activity android:name=".EndActivity"></activity>
+        <activity android:name=".EndActivity"
+            android:screenOrientation="portrait"></activity><!-- ATTENTION: This was auto-generated to add Google Play services to your project for
+     App Indexing.  See https://g.co/AppIndexing/AndroidStudio for more information. -->
+
     </application>
 
 </manifest>

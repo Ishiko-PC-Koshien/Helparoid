@@ -1,4 +1,4 @@
-package com.stonetech.helparoid;
+package com.stonetech.mezamamamama211;
 
 import android.content.Intent;
 import android.support.v7.app.AppCompatActivity;
@@ -36,6 +36,7 @@ public class PassResultActivity extends AppCompatActivity {
             public void onClick(View view) {
                 Intent intent = new Intent(getApplication(),EndActivity.class);
                 startActivity(intent);
+                overridePendingTransition(R.animator.slide_in_right, R.animator.slide_out_left);
             }
         });
 

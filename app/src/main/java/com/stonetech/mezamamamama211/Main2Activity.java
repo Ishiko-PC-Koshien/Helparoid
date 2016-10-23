@@ -1,7 +1,6 @@
-package com.stonetech.helparoid;
+package com.stonetech.mezamamamama211;
 
 import android.Manifest;
-import android.annotation.TargetApi;
 import android.app.Notification;
 import android.app.NotificationManager;
 import android.app.PendingIntent;
@@ -15,12 +14,9 @@ import android.location.Criteria;
 import android.location.Location;
 import android.location.LocationListener;
 import android.location.LocationManager;
-import android.os.Build;
 import android.os.Handler;
-import android.os.Vibrator;
 import android.provider.Settings;
 import android.support.v4.app.ActivityCompat;
-import android.support.v4.app.NotificationCompat;
 import android.support.v4.app.NotificationManagerCompat;
 import android.support.v7.app.AlertDialog;
 import android.support.v7.app.AppCompatActivity;
@@ -29,9 +25,6 @@ import android.view.KeyEvent;
 import android.view.View;
 import android.widget.Button;
 import android.widget.TextView;
-
-import com.google.android.gms.appindexing.AppIndex;
-import com.google.android.gms.common.api.GoogleApiClient;
 
 import java.util.Calendar;
 import java.util.Timer;
@@ -49,6 +42,7 @@ public class Main2Activity extends AppCompatActivity implements LocationListener
     private static int REST_OVER_1MINUTE = 2;
     private static int REST_OVER_PASS = 1;
     private static int GO_HOUSE_NOTI = -5;
+
 
     int endnoti = 0;
 
@@ -79,22 +73,30 @@ public class Main2Activity extends AppCompatActivity implements LocationListener
     int nowhour, nowminute, nowsecond,
             reshour = -5, resminute = -5, ressecond = -5;
 
-    private GoogleApiClient client;
-
     LocationManager mLocationManager;
 
     Context context = this;
 
     SharedPreferences preferences;
 
+    final int second = 0;
+    /**
+     * ATTENTION: This was auto-generated to implement the App Indexing API.
+     * See https://g.co/AppIndexing/AndroidStudio for more information.
+     */
+    //private GoogleApiClient client;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main2);
+        System.out.println("[1]");
 
-        Intent intent = getIntent();
+        //chkGpsService();
+
+        // Intent intent = getIntent();
         preferences = getSharedPreferences("preferenceSample", MODE_PRIVATE);
+        System.out.print("main2Activity");
 
         final SharedPreferences.Editor editor = preferences.edit();
         //editor.putInt("CurrentState", currentState );
@@ -103,8 +105,7 @@ public class Main2Activity extends AppCompatActivity implements LocationListener
 
         final int hourOfDay = preferences.getInt("HourOfDay", 0);
         final int minute = preferences.getInt("Minute", 0);
-        final int second = preferences.getInt("Second", 0);
-
+        System.out.println("[2]");
 
         //テキストやボタンたち
         TimeText = (TextView) findViewById(R.id.timetext);
@@ -118,7 +119,9 @@ public class Main2Activity extends AppCompatActivity implements LocationListener
         criteria.setAccuracy(Criteria.ACCURACY_FINE);
         criteria.setPowerRequirement(Criteria.POWER_MEDIUM);
         String provider = mLocationManager.getBestProvider(criteria, true);
-        if (ActivityCompat.checkSelfPermission(this, Manifest.permission.ACCESS_FINE_LOCATION) != PackageManager.PERMISSION_GRANTED && ActivityCompat.checkSelfPermission(this, Manifest.permission.ACCESS_COARSE_LOCATION) != PackageManager.PERMISSION_GRANTED) {
+        if (ActivityCompat.checkSelfPermission(this, Manifest.permission.ACCESS_FINE_LOCATION) !=
+                PackageManager.PERMISSION_GRANTED && ActivityCompat.checkSelfPermission(this,
+                Manifest.permission.ACCESS_COARSE_LOCATION) != PackageManager.PERMISSION_GRANTED) {
             // TODO: Consider calling
             //    ActivityCompat#requestPermissions
             // here to request the missing permissions, and then overriding
@@ -129,6 +132,7 @@ public class Main2Activity extends AppCompatActivity implements LocationListener
             return;
         }
         mLocationManager.requestLocationUpdates(provider, 0, 0, this);
+        System.out.println("[3]");
 
         //家から出たボタン視覚化
         GoButton.setVisibility(View.VISIBLE);
@@ -149,9 +153,11 @@ public class Main2Activity extends AppCompatActivity implements LocationListener
             passsecond = -1;
             passminute = 0;
         }
+        System.out.println("[4]");
 
         //タイマーの処理
         CountTimer = new Timer();
+        System.out.println("[5]");
 
         CountTimer.schedule(new TimerTask() {
             @Override
@@ -200,7 +206,7 @@ public class Main2Activity extends AppCompatActivity implements LocationListener
                                 editor.apply();
                             }
                         }
-                        if (reshour == 0 && resminute >= 30 && resminute  <= 59) {
+                        if (reshour == 0 && resminute >= 30 && resminute <= 59) {
                             PassText.setText("まだまだ余裕ですね");
                             if (currentState != REST_OVER_1HOUR) {
                                 currentState = REST_OVER_1HOUR;
@@ -243,7 +249,7 @@ public class Main2Activity extends AppCompatActivity implements LocationListener
                         }
                         if (reshour == 0 && resminute == 1) {
                             PassText.setText("まだですか?急げ!");
-                            if (currentState != REST_OVER_2MINUTE){
+                            if (currentState != REST_OVER_2MINUTE) {
                                 currentState = REST_OVER_2MINUTE;
                                 editor.putInt(KEY_CURRENT_STATE, currentState);
                                 notitu = LIMIT_2MINUTE;
@@ -251,9 +257,9 @@ public class Main2Activity extends AppCompatActivity implements LocationListener
                                 editor.apply();
                             }
                         }
-                        if (reshour == 0 && resminute == 0){
+                        if (reshour == 0 && resminute == 0) {
                             PassText.setText("急げ!急げ!急げ!!");
-                            if (currentState != REST_OVER_1MINUTE){
+                            if (currentState != REST_OVER_1MINUTE) {
                                 currentState = REST_OVER_1MINUTE;
                                 editor.putInt(KEY_CURRENT_STATE, currentState);
                                 notitu = LIMIT_1MINUTE;
@@ -262,7 +268,7 @@ public class Main2Activity extends AppCompatActivity implements LocationListener
 
                             }
                         }
-
+                        System.out.println("[6]");
 
 
                         //全部ゼロになったら
@@ -280,11 +286,6 @@ public class Main2Activity extends AppCompatActivity implements LocationListener
                             CountTimer.cancel();
                             CountTimer = null;
 
-                            //一応過ぎたタイマーもリセットしとく
-                            if (null != PassTimer) {
-                                PassTimer.cancel();
-                                PassTimer = null;
-                            }
                             //過ぎたタイマーの処理
                             PassTimer = new Timer();
 
@@ -310,6 +311,7 @@ public class Main2Activity extends AppCompatActivity implements LocationListener
                                 }
                             }, 0, 1000);
                         }
+                        System.out.println("[7]");
 
                         //家から出たボタンの処理(一応)
                         GoButton.setOnClickListener(new View.OnClickListener() {
@@ -324,6 +326,7 @@ public class Main2Activity extends AppCompatActivity implements LocationListener
                                     intent.putExtra("ResMinute", resminute);
                                     intent.putExtra("ResSecond", ressecond);
                                     startActivity(intent);
+                                    overridePendingTransition(R.animator.slide_in_right, R.animator.slide_out_left);
 
                                     reshour = -5;
                                     resminute = -5;
@@ -331,7 +334,7 @@ public class Main2Activity extends AppCompatActivity implements LocationListener
                                     CountTimer.cancel();
                                     CountTimer = null;
 
-                                    if (endnoti == 0){
+                                    if (endnoti == 0) {
                                         notitu = END_NOTI;
                                         buildNotification();
                                         endnoti = 1;
@@ -352,7 +355,7 @@ public class Main2Activity extends AppCompatActivity implements LocationListener
                                     PassTimer.cancel();
                                     PassTimer = null;
 
-                                    if (endnoti == 0){
+                                    if (endnoti == 0) {
                                         notitu = END_NOTI;
                                         buildNotification();
                                         endnoti = 1;
@@ -372,25 +375,31 @@ public class Main2Activity extends AppCompatActivity implements LocationListener
 
         // ATTENTION: This was auto-generated to implement the App Indexing API.
         // See https://g.co/AppIndexing/AndroidStudio for more information.
-        client = new GoogleApiClient.Builder(this).addApi(AppIndex.API).build();
+        //client = new GoogleApiClient.Builder(this).addApi(AppIndex.API).build();
 
+        System.out.println("[8]");
+
+        // ATTENTION: This was auto-generated to implement the App Indexing API.
+        // See https://g.co/AppIndexing/AndroidStudio for more information.
+        //client = new GoogleApiClient.Builder(this).addApi(AppIndex.API).build();
 
     }
 
     private boolean showingNotification = false;
 
     private void buildNotification() {
+        System.out.println("[8_1]");
 
         Intent intent = new Intent(getApplicationContext(), Main2Activity.class);
         Intent intentresres = new Intent(getApplicationContext(), ResResultActivity.class);
         Intent intentpasres = new Intent(getApplicationContext(), PassResultActivity.class);
         Intent intentend = new Intent(getApplicationContext(), EndActivity.class);
+        System.out.println("[8_2]");
 
         PendingIntent pendingIntent = PendingIntent.getActivity(context, 0, intent, 0);
         PendingIntent pendingIntentend = PendingIntent.getActivity(context, 0, intentend, 0);
         PendingIntent pendingIntentresres = PendingIntent.getActivity(context, 0, intentresres, 0);
         PendingIntent pendingIntentpasres = PendingIntent.getActivity(context, 0, intentpasres, 0);
-
 
 
         if (notitu == LIMIT_1HOUR_LARGER) {
@@ -399,7 +408,7 @@ public class Main2Activity extends AppCompatActivity implements LocationListener
                     .setContentText("まだまだ余裕ですね")    //  メッセージテキストです。
                     .setContentIntent(pendingIntent)    //  タップされた時に発行するインテントを指定します。
                     .setAutoCancel(false)    //  タップされた時に、通知バーから消去する場合はtrueにします。
-                    .setSmallIcon(R.mipmap.ic_launcher)    //  左側のアイコン画像です。
+                    .setSmallIcon(R.drawable.time_icon)    //  左側のアイコン画像です。
                     .setLights(Color.GREEN, 1000, 2000)
                     .setDefaults(Notification.DEFAULT_SOUND | Notification.DEFAULT_VIBRATE)
                     .setWhen(System.currentTimeMillis())
@@ -408,6 +417,7 @@ public class Main2Activity extends AppCompatActivity implements LocationListener
             notification.flags = Notification.FLAG_NO_CLEAR;
             NotificationManagerCompat nm = NotificationManagerCompat.from(getApplicationContext());
             nm.notify(0, notification);
+            System.out.println("[9]");
 
         }
         if (notitu == LIMIT_1HOUR) {
@@ -416,7 +426,7 @@ public class Main2Activity extends AppCompatActivity implements LocationListener
                     .setContentText("まだまだ余裕ですね")    //  メッセージテキストです。
                     .setContentIntent(pendingIntent)    //  タップされた時に発行するインテントを指定します。
                     .setAutoCancel(false)    //  タップされた時に、通知バーから消去する場合はtrueにします。
-                    .setSmallIcon(R.mipmap.ic_launcher)    //  左側のアイコン画像です。
+                    .setSmallIcon(R.drawable.time_icon)    //  左側のアイコン画像です。
                     .setLights(Color.GREEN, 1000, 2000)
                     .setDefaults(Notification.DEFAULT_SOUND | Notification.DEFAULT_VIBRATE)
                     .setWhen(System.currentTimeMillis())
@@ -432,7 +442,7 @@ public class Main2Activity extends AppCompatActivity implements LocationListener
                     .setContentText("まだ余裕ですね")    //  メッセージテキストです。
                     .setContentIntent(pendingIntent)    //  タップされた時に発行するインテントを指定します。
                     .setAutoCancel(false)    //  タップされた時に、通知バーから消去する場合はtrueにします。
-                    .setSmallIcon(R.mipmap.ic_launcher)    //  左側のアイコン画像です。
+                    .setSmallIcon(R.drawable.time_icon)    //  左側のアイコン画像です。
                     .setLights(Color.GREEN, 1000, 2000)
                     .setDefaults(Notification.DEFAULT_SOUND | Notification.DEFAULT_VIBRATE)
                     .setWhen(System.currentTimeMillis())
@@ -440,6 +450,7 @@ public class Main2Activity extends AppCompatActivity implements LocationListener
             notification.flags = Notification.FLAG_NO_CLEAR;
             NotificationManager nm = (NotificationManager) getSystemService(NOTIFICATION_SERVICE);
             nm.notify(0, notification);
+            System.out.println("[10]");
 
         }
         if (notitu == LIMIT_10MINUTE) {
@@ -448,7 +459,7 @@ public class Main2Activity extends AppCompatActivity implements LocationListener
                     .setContentText("時間が近づいてきました。")    //  メッセージテキストです。
                     .setContentIntent(pendingIntent)    //  タップされた時に発行するインテントを指定します。
                     .setAutoCancel(false)    //  タップされた時に、通知バーから消去する場合はtrueにします。
-                    .setSmallIcon(R.mipmap.ic_launcher)    //  左側のアイコン画像です。
+                    .setSmallIcon(R.drawable.time_icon)    //  左側のアイコン画像です。
                     .setLights(Color.GREEN, 1000, 2000)
                     .setDefaults(Notification.DEFAULT_SOUND | Notification.DEFAULT_VIBRATE)
                     .setWhen(System.currentTimeMillis())
@@ -464,7 +475,7 @@ public class Main2Activity extends AppCompatActivity implements LocationListener
                     .setContentText("時間がありません。急いでください!")    //  メッセージテキストです。
                     .setContentIntent(pendingIntent)    //  タップされた時に発行するインテントを指定します。
                     .setAutoCancel(false)    //  タップされた時に、通知バーから消去する場合はtrueにします。
-                    .setSmallIcon(R.mipmap.ic_launcher)    //  左側のアイコン画像です。
+                    .setSmallIcon(R.drawable.time_icon)    //  左側のアイコン画像です。
                     .setLights(Color.GREEN, 1000, 2000)
                     .setDefaults(Notification.DEFAULT_SOUND | Notification.DEFAULT_VIBRATE)
                     .setWhen(System.currentTimeMillis())
@@ -480,7 +491,7 @@ public class Main2Activity extends AppCompatActivity implements LocationListener
                     .setContentText("まだですか?急げ!")    //  メッセージテキストです。
                     .setContentIntent(pendingIntent)    //  タップされた時に発行するインテントを指定します。
                     .setAutoCancel(false)    //  タップされた時に、通知バーから消去する場合はtrueにします。
-                    .setSmallIcon(R.mipmap.ic_launcher)    //  左側のアイコン画像です。
+                    .setSmallIcon(R.drawable.time_icon)    //  左側のアイコン画像です。
                     .setLights(Color.GREEN, 1000, 2000)
                     .setDefaults(Notification.DEFAULT_SOUND | Notification.DEFAULT_VIBRATE)
                     .setWhen(System.currentTimeMillis())
@@ -496,7 +507,7 @@ public class Main2Activity extends AppCompatActivity implements LocationListener
                     .setContentText("急げ!急げ!急げ!!")    //  メッセージテキストです。
                     .setContentIntent(pendingIntent)    //  タップされた時に発行するインテントを指定します。
                     .setAutoCancel(false)    //  タップされた時に、通知バーから消去する場合はtrueにします。
-                    .setSmallIcon(R.mipmap.ic_launcher)    //  左側のアイコン画像です。
+                    .setSmallIcon(R.drawable.time_icon)    //  左側のアイコン画像です。
                     .setLights(Color.GREEN, 1000, 2000)
                     .setDefaults(Notification.DEFAULT_SOUND | Notification.DEFAULT_VIBRATE)
                     .setWhen(System.currentTimeMillis())
@@ -513,7 +524,7 @@ public class Main2Activity extends AppCompatActivity implements LocationListener
                     .setContentText("急いでください!")    //  メッセージテキストです。
                     .setContentIntent(pendingIntent)    //  タップされた時に発行するインテントを指定します。
                     .setAutoCancel(false)    //  タップされた時に、通知バーから消去する場合はtrueにします。
-                    .setSmallIcon(R.mipmap.ic_launcher)    //  左側のアイコン画像です。
+                    .setSmallIcon(R.drawable.time_icon)    //  左側のアイコン画像です。
                     .setLights(Color.GREEN, 1000, 2000)
                     .setDefaults(Notification.DEFAULT_SOUND | Notification.DEFAULT_VIBRATE)
                     .setWhen(System.currentTimeMillis())
@@ -521,6 +532,7 @@ public class Main2Activity extends AppCompatActivity implements LocationListener
             notification.flags = Notification.FLAG_NO_CLEAR;
             NotificationManager nm = (NotificationManager) getSystemService(NOTIFICATION_SERVICE);
             nm.notify(0, notification);
+            System.out.println("[11]");
 
         }
         if (notitu == GO_HOUSE) {
@@ -530,7 +542,7 @@ public class Main2Activity extends AppCompatActivity implements LocationListener
                         .setContentText("タップで結果へ")//  メッセージテキストです。
                         .setContentIntent(pendingIntentresres)    //  タップされた時に発行するインテントを指定します。
                         .setAutoCancel(true)    //  タップされた時に、通知バーから消去する場合はtrueにします。
-                        .setSmallIcon(R.mipmap.ic_launcher)//  左側のアイコン画像です。
+                        .setSmallIcon(R.drawable.time_icon)//  左側のアイコン画像です。
                         .setLights(Color.GREEN, 1000, 2000)
                         .setDefaults(Notification.DEFAULT_SOUND | Notification.DEFAULT_VIBRATE)
                         .setWhen(System.currentTimeMillis())
@@ -547,7 +559,7 @@ public class Main2Activity extends AppCompatActivity implements LocationListener
                         .setContentText("タップで結果へ")//  メッセージテキストです。
                         .setContentIntent(pendingIntentpasres)    //  タップされた時に発行するインテントを指定します。
                         .setAutoCancel(true)    //  タップされた時に、通知バーから消去する場合はtrueにします。
-                        .setSmallIcon(R.mipmap.ic_launcher)//  左側のアイコン画像です。
+                        .setSmallIcon(R.drawable.time_icon)//  左側のアイコン画像です。
                         .setLights(Color.GREEN, 1000, 2000)
                         .setDefaults(Notification.DEFAULT_SOUND | Notification.DEFAULT_VIBRATE)
                         .setWhen(System.currentTimeMillis())
@@ -559,13 +571,13 @@ public class Main2Activity extends AppCompatActivity implements LocationListener
             }
         }
 
-        if (notitu == END_NOTI){
+        if (notitu == END_NOTI) {
             Notification notification = new Notification.Builder(getApplicationContext())
                     .setContentTitle("今日は終了です")    //  タイトルです（太字）。
                     .setContentText("今日も一日頑張りましょう!")//  メッセージテキストです。
                     .setContentIntent(pendingIntentend)    //  タップされた時に発行するインテントを指定します。
                     .setAutoCancel(true)    //  タップされた時に、通知バーから消去する場合はtrueにします。
-                    .setSmallIcon(R.mipmap.ic_launcher)//  左側のアイコン画像です。
+                    .setSmallIcon(R.drawable.time_icon)//  左側のアイコン画像です。
                     //.setLights(Color.GREEN, 1000, 2000)
                     //.setDefaults(Notification.DEFAULT_SOUND | Notification.DEFAULT_VIBRATE)
                     .setWhen(System.currentTimeMillis())
@@ -588,12 +600,12 @@ public class Main2Activity extends AppCompatActivity implements LocationListener
     }
 
     //GPSが有効じゃなかったら設定画面を開く
-    private void chkGpsService() {
+    public void chkGpsService() {
 
-        //GPSセンサーが利用可能か？
+//        //GPSセンサーが利用可能か？
         if (!mLocationManager.isProviderEnabled(LocationManager.GPS_PROVIDER)) {
 
-            AlertDialog.Builder alertDialogBuilder = new AlertDialog.Builder(this);
+            AlertDialog.Builder alertDialogBuilder = new AlertDialog.Builder(Main2Activity.this);
             alertDialogBuilder.setMessage("GPSが有効になっていません。" +
                     "\n有効化すれば家から出たのを自動で検知します\n有効化しますか?")
                     .setCancelable(false)
@@ -620,7 +632,9 @@ public class Main2Activity extends AppCompatActivity implements LocationListener
         }
     }
 
-    // OnResumeでの呼び出しはこんな感じです。
+
+
+    //OnResumeでの呼び出しはこんな感じです。
     @Override
     protected void onResume() {
         if (mLocationManager != null) {
@@ -637,7 +651,7 @@ public class Main2Activity extends AppCompatActivity implements LocationListener
             mLocationManager.requestLocationUpdates(
                     LocationManager.GPS_PROVIDER,
 //                LocationManager.NETWORK_PROVIDER,
-                    1000,
+                    0,
                     0,
                     this);
         }
@@ -693,6 +707,7 @@ public class Main2Activity extends AppCompatActivity implements LocationListener
                 PassTimer.cancel();
             }
 
+            System.out.println("[ok]");
 
 //            Intent intent = new Intent(getApplicationContext(), Main2Activity.class);
 //            PendingIntent pendingIntent = PendingIntent.getActivity(context, 0, intent, 0);
@@ -729,9 +744,8 @@ public class Main2Activity extends AppCompatActivity implements LocationListener
 //            manager.notify(0, builder.build());
 
 
-
             //家から出たときのダイアログメッセージ
-            AlertDialog.Builder builder2 = new AlertDialog.Builder(this);
+            AlertDialog.Builder builder2 = new AlertDialog.Builder(Main2Activity.this);
             builder2.setMessage("家から出た!!")
                     .setPositiveButton("結果へ", new DialogInterface.OnClickListener() {
                         public void onClick(DialogInterface dialog, int id) {
@@ -744,6 +758,7 @@ public class Main2Activity extends AppCompatActivity implements LocationListener
                                 intent.putExtra("ResMinute", resminute);
                                 intent.putExtra("ResSecond", ressecond);
                                 startActivity(intent);
+                                overridePendingTransition(R.animator.slide_in_right, R.animator.slide_out_left);
 
                                 //リセット
                                 reshour = -5;
@@ -752,7 +767,7 @@ public class Main2Activity extends AppCompatActivity implements LocationListener
                                 CountTimer.cancel();
                                 CountTimer = null;
 
-                                if (endnoti == 0){
+                                if (endnoti == 0) {
                                     notitu = END_NOTI;
                                     buildNotification();
                                     endnoti = 1;
@@ -766,6 +781,7 @@ public class Main2Activity extends AppCompatActivity implements LocationListener
                                 intent.putExtra("PassMinute", passminute);
                                 intent.putExtra("PassSecond", passsecond);
                                 startActivity(intent);
+                                overridePendingTransition(R.animator.slide_in_right, R.animator.slide_out_left);
 
                                 reshour = -5;
                                 resminute = -5;
@@ -775,7 +791,7 @@ public class Main2Activity extends AppCompatActivity implements LocationListener
                                 PassTimer.cancel();
                                 PassTimer = null;
 
-                                if (endnoti == 0){
+                                if (endnoti == 0) {
                                     notitu = END_NOTI;
                                     buildNotification();
                                     endnoti = 1;
@@ -821,5 +837,5 @@ public class Main2Activity extends AppCompatActivity implements LocationListener
 
         return super.onKeyDown(keyCode, event);
     }
-
 }
+

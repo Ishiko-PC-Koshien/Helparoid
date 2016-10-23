@@ -1,0 +1,261 @@
+<?xml version="1.0" encoding="utf-8"?>
+<FrameLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:id="@+id/activity_sub"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+
+
+    tools:context="com.stonetech.mezamamamama211.SubActivity">
+
+    <ImageView
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:src="@drawable/backgroundblue"
+        android:scaleType="centerCrop"/>
+
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:orientation="vertical">
+
+        <include layout="@layout/titleber"/>
+
+        <Space
+            android:layout_width="match_parent"
+            android:layout_height="4dp" />
+
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:weightSum="2">
+
+            <Button
+                android:background="@drawable/border_frame1"
+                android:layout_width="wrap_content"
+                android:layout_height="50dp"
+                android:layout_weight="1"
+                android:text="キャンセル"
+                android:textColor="#dddddd"
+                android:id="@+id/button_sub0" />
+
+            <Space android:layout_width="5dip"
+                android:layout_height="match_parent"/>
+
+            <include layout="@layout/divider2"/>
+
+            <Space android:layout_width="5dip"
+                android:layout_height="match_parent"/>
+
+            <Button
+                android:background="@drawable/border_frame1"
+                android:layout_weight="1"
+                android:layout_width="wrap_content"
+                android:layout_height="50dp"
+                android:text="　完了　"
+                android:textColor="#dddddd"
+                android:id="@+id/button_sub3" />
+
+        </LinearLayout>
+
+        <Space android:layout_width="match_parent"
+            android:layout_height="5dip"/>
+
+        <include layout="@layout/divider"/>
+
+        <Space android:layout_width="match_parent"
+            android:layout_height="5dip"/>
+
+
+
+
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="horizontal"
+            android:weightSum="10">
+
+            <Button
+                android:layout_width="0dp"
+                android:layout_height="match_parent"
+                android:layout_weight="4"
+                android:background="@drawable/border_frame2"
+                android:textColor="#dddddd"
+                android:id="@+id/timePickerWakeUp"
+                android:text="起床時間設定"
+
+                />
+
+
+
+        </LinearLayout>
+
+
+        <Space
+            android:layout_width="match_parent"
+            android:layout_height="5dp"
+            />
+
+        <include layout="@layout/divider"/>
+
+        <TextView
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text= " 起床時間"
+            android:textColor="#dddddd"
+            android:textSize="18sp"/>
+
+        <include layout="@layout/divider"/>
+
+
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="horizontal"
+            android:weightSum="10">
+
+            <Space
+                android:layout_width="0dp"
+                android:layout_height="match_parent"
+                android:layout_weight="1"/>
+
+            <TextView
+                android:layout_width="0dp"
+                android:layout_height="match_parent"
+                android:layout_weight="1"
+                android:textSize="25sp"
+                android:id="@+id/wakeUpHourText"
+                android:gravity="right"
+                android:textColor="#dddddd"
+                android:text="7"
+                />
+
+            <TextView
+                android:layout_width="0dp"
+                android:layout_height="match_parent"
+                android:layout_weight="0.5"
+                android:text=":"
+                android:gravity="center"
+                android:textColor="#dddddd"
+                android:textSize="25sp"/>
+
+            <TextView
+                android:layout_width="0dp"
+                android:layout_height="match_parent"
+                android:layout_weight="1"
+                android:textSize="25sp"
+                android:id="@+id/wakeUpMinuteText"
+                android:gravity="left"
+                android:textColor="#dddddd"
+                android:text="30"
+                />
+
+        </LinearLayout>
+
+        <Space
+            android:layout_width="match_parent"
+            android:layout_height="7dp"
+            />
+
+        <include layout="@layout/divider"/>
+
+
+        <Space
+            android:layout_width="match_parent"
+            android:layout_height="5dp"
+            />
+
+       <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="horizontal"
+            android:weightSum="10">
+
+            <Button
+                android:layout_width="0dp"
+                android:layout_height="match_parent"
+                android:layout_weight="4"
+                android:background="@drawable/border_frame2"
+                android:textColor="#dddddd"
+                android:id="@+id/timePickerGoHome"
+                android:text="出発時間設定"/>
+            </LinearLayout>
+
+        <Space
+            android:layout_width="match_parent"
+            android:layout_height="5dp"
+            />
+
+
+        <include layout="@layout/divider"/>
+
+
+
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text=" 家から出る時間"
+            android:id="@+id/textView2"
+            android:textColor="#dddddd"
+            android:textSize="18sp"/>
+
+        <include layout="@layout/divider"/>
+
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="horizontal"
+            android:weightSum="10">
+
+            <Space
+                android:layout_width="0dp"
+                android:layout_height="match_parent"
+                android:layout_weight="1"/>
+
+            <TextView
+                android:layout_width="0dp"
+                android:layout_height="match_parent"
+                android:layout_weight="1"
+                android:textSize="25sp"
+                android:id="@+id/goHomeHourText"
+                android:gravity="right"
+                android:textColor="#dddddd"
+                android:text="8"
+                />
+
+            <TextView
+                android:layout_width="0dp"
+                android:layout_height="match_parent"
+                android:layout_weight="0.5"
+                android:text=":"
+                android:gravity="center"
+                android:textColor="#dddddd"
+                android:textSize="25sp"/>
+
+            <TextView
+                android:layout_width="0dp"
+                android:layout_height="match_parent"
+                android:layout_weight="1"
+                android:textSize="25sp"
+                android:id="@+id/goHomeMinuteText"
+                android:gravity="left"
+                android:textColor="#dddddd"
+                android:text="30"
+                />
+            </LinearLayout>
+
+        <include layout="@layout/divider"/>
+
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:textAppearance="?android:attr/textAppearanceMedium"
+            android:text="Medium Text"
+            android:id="@+id/textView"
+            android:visibility="invisible"/>
+
+    </LinearLayout>
+
+
+</FrameLayout>
+

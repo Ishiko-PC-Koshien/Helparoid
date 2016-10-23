@@ -1,16 +1,12 @@
-package com.stonetech.helparoid;
+package com.stonetech.mezamamamama211;
 
 import android.content.Intent;
-import android.content.SharedPreferences;
-import android.renderscript.RSDriverException;
 import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
 import android.view.KeyEvent;
 import android.view.View;
 import android.widget.Button;
 import android.widget.TextView;
-
-import java.util.Calendar;
 
 public class ResResultActivity extends AppCompatActivity {
 
@@ -42,6 +38,7 @@ public class ResResultActivity extends AppCompatActivity {
             public void onClick(View view) {
                 Intent intent = new Intent(getApplication(), EndActivity.class);
                 startActivity(intent);
+                overridePendingTransition(R.animator.slide_in_right, R.animator.slide_out_left);
             }
         });
 
@@ -56,5 +53,4 @@ public class ResResultActivity extends AppCompatActivity {
 
         return super.onKeyDown(keyCode, event);
     }
-
 }
